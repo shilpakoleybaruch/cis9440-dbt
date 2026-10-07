@@ -1,4 +1,6 @@
+
 version: 2
+
 sources:
   - name: raw
     description: Raw data loaded from NYC Open Data
@@ -9,3 +11,7 @@ sources:
         description: |
           NYC 311 service requests for Dept of Transportation.
           One row per service request.
+      - name: source_nyc_dob_job_apps
+        description: |
+          NYC Dept of Buildings DOB NOW: Build job application filings.
+          One row per job filing (job_filing_number).
