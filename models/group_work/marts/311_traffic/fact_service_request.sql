@@ -1,6 +1,8 @@
 -- Fact table for 311 traffic service requests
 -- Grain: one row per service request (request_id)
 -- No numeric measures: this is a factless fact table, analysed by counting requests
+-- Each key is looked up in its dimension with ref(), so dbt builds every
+-- dimension before this fact
 
 WITH stg_311 AS (
     SELECT * FROM {{ ref('stg_311_traffic') }}
@@ -27,11 +29,11 @@ cleaned AS (
     FROM stg_311
 ),
 
-fact_service_request AS (
+-- Step 1: build each key from the source columns
+keyed AS (
     SELECT
         request_id,
 
-        -- Foreign keys: built the same way as in each dimension
         CASE
             WHEN created_date IS NULL THEN '-1'
             ELSE {{ dbt_utils.generate_surrogate_key(['DATE(created_date)']) }}
@@ -99,6 +101,46 @@ fact_service_request AS (
         latitude,
         longitude
     FROM cleaned
+),
+
+-- Step 2: look each key up in its dimension; a miss falls back to the Unknown row
+fact_service_request AS (
+    SELECT
+        k.request_id,
+        COALESCE(dc.date_key, '-1') AS created_date_key,
+        COALESCE(dx.date_key, '-1') AS closed_date_key,
+        COALESCE(loc.location_key, '-1') AS location_key,
+        COALESCE(ag.agency_key, '-1') AS agency_key,
+        COALESCE(cmp.complaint_key, '-1') AS complaint_key,
+        COALESCE(res.resolution_key, '-1') AS resolution_key,
+        COALESCE(gov.local_gov_key, '-1') AS local_gov_key,
+        COALESCE(br.bridge_key, '-1') AS bridge_key,
+        COALESCE(st.status_key, '-1') AS status_key,
+        k.resolution_action_updated_date,
+        k.location_type,
+        k.incident_address,
+        k.street_name,
+        k.cross_street_1,
+        k.cross_street_2,
+        k.intersection_street_1,
+        k.intersection_street_2,
+        k.address_type,
+        k.city,
+        k.landmark,
+        k.bbl,
+        k.method_of_submission,
+        k.latitude,
+        k.longitude
+    FROM keyed k
+    LEFT JOIN {{ ref('dim_date') }} dc ON k.created_date_key = dc.date_key
+    LEFT JOIN {{ ref('dim_date') }} dx ON k.closed_date_key = dx.date_key
+    LEFT JOIN {{ ref('dim_location') }} loc ON k.location_key = loc.location_key
+    LEFT JOIN {{ ref('dim_agency') }} ag ON k.agency_key = ag.agency_key
+    LEFT JOIN {{ ref('dim_complaint') }} cmp ON k.complaint_key = cmp.complaint_key
+    LEFT JOIN {{ ref('dim_resolution') }} res ON k.resolution_key = res.resolution_key
+    LEFT JOIN {{ ref('dim_local_gov') }} gov ON k.local_gov_key = gov.local_gov_key
+    LEFT JOIN {{ ref('dim_bridge') }} br ON k.bridge_key = br.bridge_key
+    LEFT JOIN {{ ref('dim_status') }} st ON k.status_key = st.status_key
 )
 
 SELECT * FROM fact_service_request
