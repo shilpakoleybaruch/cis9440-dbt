@@ -38,3 +38,19 @@ models:
 
        dot_311:
          +materialized: table
+
+   group_work:
+      staging:
+        +materialized: table
+        +schema: cis9440_group5_staging
+      marts:
+        +materialized: table
+        +schema: cis9440_group5_warehouse_marts
+        conformed:
+          +materialized: table
+        mv_collisions:
+          +materialized: table
+        311_traffic:
+          +materialized: table
+
+
