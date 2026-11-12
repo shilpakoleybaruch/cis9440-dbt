@@ -73,7 +73,6 @@ cleaned AS (
    AND crash_date IS NOT NULL
    AND CAST(crash_date AS DATE) >= '2020-01-01'
    AND CAST(crash_date AS DATE) < '2026-10-21'
-   AND borough IS NOT NULL
 
    -- Deduplicate
    QUALIFY ROW_NUMBER() OVER (PARTITION BY collision_id ORDER BY crash_date DESC) = 1
