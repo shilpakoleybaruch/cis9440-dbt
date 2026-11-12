@@ -41,7 +41,10 @@ enriched AS (
                 'Outside Car Distraction', 'Cell Phone (hand-Held)',
                 'Fell Asleep', 'Fatigued/Drowsy', 'Lost Consciousness',
                 'Illnes', 'Physical Disability', 'Alcohol Involvement',
-                'Drugs (illegal)', 'Prescription Medication'
+                'Drugs (illegal)', 'Prescription Medication',
+                'Cell Phone (hands-free)', 'Eating or Drinking',
+                'Listening/Using Headphones', 'Other Electronic Device',
+                'Texting', 'Using On Board Navigation Device'
             ) THEN 'Driver Attention'
             WHEN contributing_factor IN (
                 'Following Too Closely', 'Passing or Lane Usage Improper',
@@ -55,14 +58,17 @@ enriched AS (
                 'Brakes Defective', 'Steering Failure', 'Tire Failure/Inadequate',
                 'Accelerator Defective', 'Tow Hitch Defective', 'Headlights Defective',
                 'Other Lighting Defects', 'Tinted Windows', 'Oversized Vehicle',
-                'Driverless/Runaway Vehicle', 'Other Vehicular', 'Vehicle Vandalism'
+                'Driverless/Runaway Vehicle', 'Other Vehicular', 'Vehicle Vandalism',
+                'Windshield Inadequate'
             ) THEN 'Vehicle Condition'
             WHEN contributing_factor IN (
                 'Pavement Slippery', 'Pavement Defective', 'View Obstructed/Limited',
                 'Glare', 'Obstruction/Debris', 'Animals Action',
-                'Lane Marking Improper/Inadequate'
+                'Lane Marking Improper/Inadequate',
+                'Shoulders Defective/Improper'
             ) THEN 'Environment'
-            WHEN contributing_factor = 'Unspecified' THEN 'Unknown'
+            WHEN contributing_factor = 'Unspecified'
+                OR REGEXP_CONTAINS(contributing_factor, r'^[0-9]+$') THEN 'Unknown'
             ELSE 'Other'
         END AS factor_category,
         -- Link to the 311 request types, used for the optional concordance metric
